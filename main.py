@@ -9,6 +9,7 @@ import pickle as pkl
 from sklearn import preprocessing as p
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_GPU_THREAD_MODE']='gpu_private'
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import load_model, Model
 from tensorflow.keras.layers import Dense, Conv2D, Flatten, Reshape, MaxPooling2D, UpSampling2D, Conv2DTranspose
@@ -33,7 +34,7 @@ import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
 
-#mixed_precision.set_global_policy('mixed_float16')
+mixed_precision.set_global_policy('mixed_float16')
 
 # Define arguments for inline parsing
 paths = s.paths()
@@ -118,6 +119,10 @@ if args.train:
 
     # Create a validation set
     X_train, X_valid, X_train_c, X_valid_c = train_test_split(X_train, X_train_c, test_size=0.2, shuffle=True)
+
+    X_train = tf.convert_to_tensor(X_train)
+    X_train_c = tf.convert_to_tensor(X_train_c)
+
 
 
     # Create network class

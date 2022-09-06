@@ -40,8 +40,6 @@ from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
 import matplotlib.pyplot as plt
-os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
-
 class DenseMax(Layer):
     """
         Custom kera slayer 
@@ -477,6 +475,29 @@ class TCN_c(Layer):
         config['kernel_initializer'] = self.kernel_initializer
         return config
 
+
+class CustomModel(keras.Model):
+    def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+        x, y = data
+
+        with tf.GradientTape() as tape:
+            y_pred = self(x, training=True)  # Forward pass
+            # Compute the loss value
+            # (the loss function is configured in `compile()`)
+            loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+
+        # Compute gradients
+        trainable_vars = self.trainable_variables
+        gradients = tape.gradient(loss, trainable_vars)
+        # Update weights
+        self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+        # Update metrics (includes the metric that tracks the loss)
+        self.compiled_metrics.update_state(y, y_pred)
+        # Return a dict mapping metric names to current value
+        return {m.name: m.result() for m in self.metrics}
+
 class Autoencoder():
     # This class should return the required autoencoder architecture
     def __init__(self, model, input_shape, latent_dim, dataset_type='log', max_n=None, toeplitz_spec=None, toeplitz_true=None):
@@ -535,7 +556,7 @@ class Autoencoder():
         output = Dense(1, activation='linear')(dec_reconstructed)        
 
 
-        autoencoder = Model(inputs=inp, outputs=[output])
+        autoencoder = CustomModel(inputs=inp, outputs=[output])
 
         adam = optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0, amsgrad=True)
         
