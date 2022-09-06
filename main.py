@@ -33,7 +33,7 @@ import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
 
-mixed_precision.set_global_policy('mixed_float16')
+#mixed_precision.set_global_policy('mixed_float16')
 
 # Define arguments for inline parsing
 paths = s.paths()
@@ -87,18 +87,18 @@ if args.train:
     logs = "new_logs/" + '{}_{}_{}'.format(today, time_str, net_name)
     tboard_callback = tf.keras.callbacks.TensorBoard(log_dir = logs,
                                                      histogram_freq =1,
-                                                     profile_batch =(2, 5))
+                                                     profile_batch =(1, 5))
     
     # Datasets
-    input_dataset_file = 'noise_dataset_raw_sounds'
-    output_dataset_file = 'clean_dataset_raw_sounds'
+    input_dataset_file = 'clean_toy_dataset.npy'
+    output_dataset_file = 'clean_toy_dataset.npy'
 
     # Distinguish between noisy input and clean reconstruction target
     # X_train = np.load(open(input_dataset_file, 'rb'), mmap_mode='r', allow_pickle=True).astype('float32')
     # X_train_c = np.load(open(output_dataset_file, 'rb'), mmap_mode='r', allow_pickle=True).astype('float32')
 
-    X_train = np.load('noise_raw.npy', mmap_mode='r')
-    X_train_c = np.load('clean_raw.npy', mmap_mode='r')
+    X_train = np.load('clean_toy_dataset.npy')
+    X_train_c = np.load('clean_toy_dataset.npy')
 
     # Select the desired portion of the data and shuffle it
     shuffle_mask = np.random.choice(X_train.shape[0], int(args.data_size/100 * X_train.shape[0]), replace=False)
@@ -145,6 +145,7 @@ if args.train:
   
 
     history = autoencoder.fit(X_train, X_train_c,
+                              use_multiprocessing=True,
                               #validation_data=(X_valid, X_valid_c),
                               epochs=args.epochs, 
                               callbacks=[tboard_callback])
@@ -174,19 +175,7 @@ if args.train:
 #     args_dict['output_dataset_file'] = output_dataset_file
 #     args_dict['creation_date'] = today
 #     args_dict['creation time'] = time_str
-#     args_dict['training_time'] = training_time
-#     args_dict['epochs'] = params.epochs
-#     args_dict['blurring_kernel_size'] = autoencoder.get_layer('gaussian_blur').weights[0].shape[0]
-#     args_dict['best_loss'] = np.min(history.history['loss'])
-#     args_dict['end_loss'] = history.history['loss'][-1]
-
-#     # Add training time
-
-#     with open(os.path.join(save_model_path, 'metadata.json'), 'w') as f:
-#       json.dump(args_dict, f, indent=4)
-
-#     ## Run prediction
-#     sounds_to_encode = '/home/user/Documents/Antonin/Dimmy/Data/SoundsHearlight'
+#     args_dict['training_time'] = training'
 
 #     # Loop trough each sound and output the latent representation
 #     for i, f in track(enumerate(n.natsorted(os.listdir(sounds_to_encode))), total=len(os.listdir(sounds_to_encode))):
