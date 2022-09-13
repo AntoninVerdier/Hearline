@@ -174,7 +174,8 @@ class Autoencoder():
         enc_pooled = pooler(pool_size=sampling_factor, strides=None, padding='valid', data_format='channels_last')(enc_flat)
         
         # If you want, maybe put the pooled values through a non-linear Activation
-        encoded = Activation("relu")(enc_pooled)
+        encoded = LeakyReLU(alpha=0.3, name='encoded')(enc_pooled)
+
         
         dec_upsample = UpSampling1D(size=sampling_factor)(encoded)
 
@@ -183,7 +184,7 @@ class Autoencoder():
                                 kernel_initializer=conv_kernel_init, name='tcn-dec')(dec_upsample)
 
         # Put the filter-outputs through a dense layer finally, to get the reconstructed signal
-        output = Dense(1, activation='linear')(dec_reconstructed)        
+        output = Dense(1, activation='linear', dtype='float32')(dec_reconstructed)        
 
 
         autoencoder = Model(inputs=inp, outputs=[output])
