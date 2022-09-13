@@ -9,6 +9,7 @@ import pickle as pkl
 from sklearn import preprocessing as p
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_GPU_THREAD_MODE']='gpu_private'
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import load_model, Model
 from tensorflow.keras.layers import Dense, Conv2D, Flatten, Reshape, MaxPooling2D, UpSampling2D, Conv2DTranspose
@@ -85,10 +86,11 @@ if args.train:
     logs = "new_logs/" + '{}_{}_{}'.format(today, time_str, net_name)
     tboard_callback = tf.keras.callbacks.TensorBoard(log_dir = logs,
                                                      histogram_freq =1,
-                                                     profile_batch =(2, 5))
+                                                     profile_batch =(1, 5))
     
     input_dataset_file = 'noise_raw.npy'
     output_dataset_file = 'clean_raw.npy'
+
 
     # Distinguish between noisy input and clean reconstruction target
     # X_train = np.load(open(input_dataset_file, 'rb'), mmap_mode='r', allow_pickle=True).astype('float32')
@@ -97,6 +99,7 @@ if args.train:
     # Datasets
     X_train = np.load(input_dataset_file, mmap_mode='r')
     X_train_c = np.load(output_dataset_file, mmap_mode='r')
+
 
     # Select the desired portion of the data and shuffle it
     shuffle_mask = np.random.choice(X_train.shape[0], int(args.data_size/100 * X_train.shape[0]), replace=False)
@@ -116,6 +119,10 @@ if args.train:
 
     # Create a validation set
     X_train, X_test, X_train_c, X_test_c = train_test_split(X_train, X_train_c, test_size=0.2, shuffle=True)
+
+    X_train = tf.convert_to_tensor(X_train)
+    X_train_c = tf.convert_to_tensor(X_train_c)
+
 
 
     # Create network class
@@ -143,6 +150,7 @@ if args.train:
   
 
     history = autoencoder.fit(X_train, X_train_c,
+                              use_multiprocessing=True,
                               epochs=args.epochs, 
                               callbacks=[tboard_callback])
 
