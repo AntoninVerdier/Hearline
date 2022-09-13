@@ -191,22 +191,9 @@ if args.train:
 
 
     X_test = np.expand_dims(X_test, axis=2)
-
     y_pred = autoencoder.predict(X_test)
-    # Loop trough each sound and output the latent representation
-    for i, f in X_test:
+    np.save('prediction', [X_test, y_pred])
 
-      X_test = np.expand_dims(X_test, axis=2)
-
-      
-      # Load soundfile and compute spectrogram
-      X_test = np.expand_dims(proc.load_unique_file_cqt(os.path.join(sounds_to_encode, f), y, mod='log', cropmid=True), 0)
-      X_test = X_test.astype('float32')/255.0
-      X_test = X_test[:, :input_shape[0], :input_shape[1]]
-      X_test = np.expand_dims(X_test, 3)
-
-      encoder = Model(inputs=autoencoder.input, outputs=autoencoder.get_layer('encoded').output)
-      blurred_output = Model(inputs=autoencoder.input, outputs=autoencoder.get_layer('gaussian_blur').output)
 
       
 
