@@ -1,8 +1,8 @@
 import os
 import time
-import dpam
 import tensorflow as tf
 import inspect
+import dpam
 
 import tensorflow.keras
 import numpy as np
@@ -24,6 +24,10 @@ from tensorflow.keras import regularizers, activations, initializers, constraint
 from tensorflow.keras import backend as K
 from tensorflow.keras.constraints import UnitNorm, Constraint
 
+tf.compat.v1.disable_eager_execution()
+
+
+
 import tensorflow.experimental.numpy as tnp
 import tensorflow_probability as tfp
 
@@ -31,7 +35,6 @@ import tensorflow_probability as tfp
 # from AE import VAE
 
 from sklearn import preprocessing as p
-#tf.config.run_functions_eagerly(False)
 
 
 from tensorflow import keras
@@ -41,6 +44,7 @@ from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
 import matplotlib.pyplot as plt
+
 class DenseMax(Layer):
     """
         Custom kera slayer 
@@ -496,7 +500,7 @@ class CustomModel(keras.Model):
 
 class Autoencoder():
     # This class should return the required autoencoder architecture
-    def __init__(self, model, input_shape, latent_dim, dataset_type='log', max_n=None, toeplitz_spec=None, toeplitz_true=None):
+    def __init__(self, model, input_shape, latent_dim, dataset_type='log', max_n=None):
         self.model = model
         self.input_shape = input_shape
         self.latent_dim = latent_dim
@@ -557,7 +561,7 @@ class Autoencoder():
 
         adam = optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0, amsgrad=True)
         
-        autoencoder.compile(loss='log_cosh', optimizer=adam, metrics=[loss])
+        autoencoder.compile(loss=dpam.DPAM().forward, optimizer=adam)
         
         print(autoencoder.summary())
 
