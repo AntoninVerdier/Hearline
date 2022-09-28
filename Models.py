@@ -1,5 +1,6 @@
 import os
 import time
+import dpam
 import tensorflow as tf
 import inspect
 
@@ -30,7 +31,7 @@ import tensorflow_probability as tfp
 # from AE import VAE
 
 from sklearn import preprocessing as p
-tf.config.run_functions_eagerly(False)
+#tf.config.run_functions_eagerly(False)
 
 
 from tensorflow import keras
@@ -85,12 +86,7 @@ class DenseMax(Layer):
                                           name='kernel',
                                           regularizer=self.kernel_regularizer,
                                           constraint=self.kernel_constraint)
-        if self.use_bias:
-            self.bias = self.add_weight(shape=(self.units,),
-                                        initializer=self.bias_initializer,
-                                        name='bias',
-                                        regularizer=self.bias_regularizer,
-                                        constraint=self.bias_constraint)
+        if self.use_bias:Trueraint=self.bias_constraint
         else:
             self.bias = None
         self.input_spec = InputSpec(min_ndim=2, axes={-1: input_dim})
@@ -319,7 +315,7 @@ class TCN_c(Layer):
                  dilations=(1, 2, 4, 8, 16, 32),
                  padding='causal',
                  use_skip_connections=True,
-                 dropout_rate=0.0,
+                 dropout_rate=0.1,
                  return_sequences=False,
                  activation='relu',
                  kernel_initializer='he_normal',
@@ -511,15 +507,15 @@ class Autoencoder():
             return self.__tcn_ae()
 
     def __tcn_ae(self):
-        dilations = (1, 2, 4, 16)
-        nb_filters = 20
-        kernel_size = 20
+        dilations = (3, 9, 27, 81, 243, 729)
+        nb_filters = 100
+        kernel_size = 5
         nb_stacks = 1
-        padding = 'same'
-        dropout_rate = 0.00
-        filters_conv1d = 32
+        padding = 'causal'
+        dropout_rate = 0.1
+        filters_conv1d = 100
         activation_conv1d = 'linear'
-        latent_sample_rate = 64
+        latent_sample_rate = 128
         pooler = AveragePooling1D
         lr = 0.001
         conv_kernel_init = 'glorot_normal'
@@ -561,7 +557,7 @@ class Autoencoder():
 
         adam = optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0, amsgrad=True)
         
-        autoencoder.compile(loss=loss, optimizer=adam, metrics=[loss])
+        autoencoder.compile(loss='log_cosh', optimizer=adam, metrics=[loss])
         
         print(autoencoder.summary())
 

@@ -86,7 +86,7 @@ if args.train:
     logs = "new_logs/" + '{}_{}_{}'.format(today, time_str, net_name)
     tboard_callback = tf.keras.callbacks.TensorBoard(log_dir = logs,
                                                      histogram_freq =1,
-                                                     profile_batch =(1, 5))
+                                                     profile_batch =(1, 10))
     
     input_dataset_file = 'noise_raw.npy'
     output_dataset_file = 'clean_raw.npy'
@@ -152,6 +152,7 @@ if args.train:
     history = autoencoder.fit(X_train, X_train_c,
                               use_multiprocessing=True,
                               epochs=args.epochs, 
+                              batch_size=4,
                               callbacks=[tboard_callback])
 
 
@@ -180,7 +181,6 @@ if args.train:
     args_dict['creation time'] = time_str
     args_dict['training_time'] = training_time
     args_dict['epochs'] = params.epochs
-    args_dict['blurring_kernel_size'] = autoencoder.get_layer('gaussian_blur').weights[0].shape[0]
     args_dict['best_loss'] = np.min(history.history['loss'])
     args_dict['end_loss'] = history.history['loss'][-1]
 
