@@ -3,10 +3,10 @@ import tensorflow.keras
 
 class paths():
 	def __init__(self):
-		self.path2Data = '/home/user/Documents/Antonin/Code/Hearline/Data'
-		self.path2Models = '/home/user/Documents/Antonin/Code/Hearline/ModelSave'
-		self.path2Output = '/home/user/Documents/Antonin/Code/Hearline/OutputFig'
-		self.path2OutputD = '/home/user/Documents/Antonin/Code/Hearline/Latent'
+		self.path2Data = '/home/user/Documents/Antonin/Hearline/Data'
+		self.path2Models = '/home/user/Documents/Antonin/Hearline/ModelSave'
+		self.path2Output = '/home/user/Documents/Antonin/Hearline/OutputFig'
+		self.path2OutputD = '/home/user/Documents/Antonin/Hearline/Latent'
 
 
 class params():

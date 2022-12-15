@@ -1,49 +1,26 @@
-import os
-import time
 import tensorflow as tf
 import inspect
-import dpam
+import cdpam
 
-import tensorflow.keras
 import numpy as np
 
-from tcn import TCN
-
-import keras_tuner as kt
-from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import Input, Dense, InputLayer, Flatten, Reshape, Layer, Conv2D, Conv2DTranspose, MaxPooling2D, UpSampling2D, DepthwiseConv2D, LeakyReLU
-from tensorflow.keras.layers import Activation, Dropout, Conv1D, UpSampling1D, MaxPooling1D, AveragePooling1D, SpatialDropout1D, Lambda
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Layer, LeakyReLU
+from tensorflow.keras.layers import Activation, Conv1D, UpSampling1D, AveragePooling1D, SpatialDropout1D, Lambda
 
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
 
-from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, Dense, Layer, InputSpec
-from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
-from tensorflow.keras import regularizers, activations, initializers, constraints, Sequential
-from tensorflow.keras import backend as K
-from tensorflow.keras.constraints import UnitNorm, Constraint
-
-tf.compat.v1.disable_eager_execution()
-
+from tensorflow.keras import regularizers, activations, initializers, constraints
 
 
 import tensorflow.experimental.numpy as tnp
-import tensorflow_probability as tfp
-
-# from AE import Sampling
-# from AE import VAE
-
-from sklearn import preprocessing as p
-
 
 from tensorflow import keras
 from tensorflow.keras import layers
 
-from tensorflow.python.ops.numpy_ops import np_config
-np_config.enable_numpy_behavior()
 
-import matplotlib.pyplot as plt
 
 class DenseMax(Layer):
     """
@@ -285,7 +262,7 @@ class ResidualBlock(Layer):
 
 
 
-class TCN_c(Layer):
+class TCN(Layer):
     """Creates a TCN layer.
 
         Input shape:
@@ -362,7 +339,7 @@ class TCN_c(Layer):
             raise ValueError("Only 'causal' or 'same' padding are compatible for this layer.")
 
         # initialize parent class
-        super(TCN_c, self).__init__(**kwargs)
+        super(TCN, self).__init__(**kwargs)
 
     @property
     def receptive_field(self):
@@ -459,7 +436,7 @@ class TCN_c(Layer):
         Returns the config of a the layer. This is used for saving and loading from a model
         :return: python dictionary with specs to rebuild layer
         """
-        config = super(TCN_c, self).get_config()
+        config = super(TCN, self).get_config()
         config['nb_filters'] = self.nb_filters
         config['kernel_size'] = self.kernel_size
         config['nb_stacks'] = self.nb_stacks
@@ -511,6 +488,18 @@ class Autoencoder():
             return self.__tcn_ae()
 
     def __tcn_ae(self):
+
+        def cdpam_fn(y_true, y_pred):
+
+            # inp = y_true.numpy().squeeze()
+            # out = y_pred.numpy().squeeze()
+            
+            loss = cdpam.CDPAM(dev='cpu').forward(y_true, y_pred)
+            #loss = tf.keras.losses.mean_squared_error(y_true, y_pred)
+            print(loss)
+
+            return loss
+
         dilations = (3, 9, 27, 81, 243, 729)
         nb_filters = 100
         kernel_size = 5
@@ -523,17 +512,14 @@ class Autoencoder():
         pooler = AveragePooling1D
         lr = 0.001
         conv_kernel_init = 'glorot_normal'
-        loss = 'logcosh'
         sampling_factor = latent_sample_rate
-
-        print(self.input_shape)
         
         
-        tensorflow.keras.backend.clear_session()
+        #tensorflow.keras.backend.clear_session()
         inp = Input((self.input_shape[1], 1))
 
         # Put signal through TCN. Output-shape: (batch,sequence length, nb_filters)
-        tcn_enc = TCN_c(nb_filters=nb_filters, kernel_size=kernel_size, nb_stacks=nb_stacks, dilations=dilations, 
+        tcn_enc = TCN(nb_filters=nb_filters, kernel_size=kernel_size, nb_stacks=nb_stacks, dilations=dilations, 
                       padding=padding, use_skip_connections=True, dropout_rate=dropout_rate, return_sequences=True,
                       kernel_initializer=conv_kernel_init, name='tcn-enc')(inp)
 
@@ -549,7 +535,7 @@ class Autoencoder():
         
         dec_upsample = UpSampling1D(size=sampling_factor)(encoded)
 
-        dec_reconstructed = TCN_c(nb_filters=nb_filters, kernel_size=kernel_size, nb_stacks=nb_stacks, dilations=dilations, 
+        dec_reconstructed = TCN(nb_filters=nb_filters, kernel_size=kernel_size, nb_stacks=nb_stacks, dilations=dilations, 
                                 padding=padding, use_skip_connections=True, dropout_rate=dropout_rate, return_sequences=True,
                                 kernel_initializer=conv_kernel_init, name='tcn-dec')(dec_upsample)
 
@@ -557,11 +543,12 @@ class Autoencoder():
         output = Dense(1, activation='linear', dtype='float32')(dec_reconstructed)        
 
 
-        autoencoder = CustomModel(inputs=inp, outputs=[output])
+        autoencoder = Model(inputs=inp, outputs=[output])
 
         adam = optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0, amsgrad=True)
         
-        autoencoder.compile(loss=dpam.DPAM().forward, optimizer=adam)
+        autoencoder.compile(loss=cdpam_fn, optimizer=adam)
+
         
         print(autoencoder.summary())
 

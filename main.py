@@ -29,10 +29,10 @@ import preproc as proc
 from Models import Autoencoder, DenseMax
 import tensorflow as tf
 
-from tensorflow.keras import mixed_precision
+# from tensorflow.keras import mixed_precision
 
 
-mixed_precision.set_global_policy('mixed_float16')
+# mixed_precision.set_global_policy('mixed_float16')
 
 # Define arguments for inline parsing
 paths = s.paths()
@@ -91,7 +91,6 @@ if args.train:
     input_dataset_file = 'noise_raw.npy'
     output_dataset_file = 'clean_raw.npy'
 
-
     # Distinguish between noisy input and clean reconstruction target
     # X_train = np.load(open(input_dataset_file, 'rb'), mmap_mode='r', allow_pickle=True).astype('float32')
     # X_train_c = np.load(open(output_dataset_file, 'rb'), mmap_mode='r', allow_pickle=True).astype('float32')
@@ -120,10 +119,10 @@ if args.train:
     # Create a validation set
     X_train, X_test, X_train_c, X_test_c = train_test_split(X_train, X_train_c, test_size=0.2, shuffle=True)
 
-    X_train = tf.convert_to_tensor(X_train)
-    X_train_c = tf.convert_to_tensor(X_train_c)
+    # X_train = tf.convert_to_tensor(X_train)
+    # X_train_c = tf.convert_to_tensor(X_train_c)
 
-
+    print(X_train.shape)
 
     # Create network class
     auto = Autoencoder('{net}'.format(net=args.network if args.network else 'dense'), input_shape, params.latent_size)
@@ -150,10 +149,8 @@ if args.train:
   
 
     history = autoencoder.fit(X_train, X_train_c,
-                              use_multiprocessing=True,
                               epochs=args.epochs, 
-                              batch_size=4,
-                              callbacks=[tboard_callback])
+                              batch_size=4)
 
 
 
